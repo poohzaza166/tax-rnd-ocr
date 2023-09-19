@@ -31,9 +31,13 @@ increase the cost of having to train these people.
 
 # Team Member
 Bhumin Sabsrisupachai (Pooh)
+
 Rajasurang Wongkrasaemongkol (Prim)
+
 Lalida Krairit (Lala)
+
 Niracha Janavatara (Nana)
+
 Napun Kruawongwanich (Matthew)
 
 Advisor : Pasin Manurangsi
