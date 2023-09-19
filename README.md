@@ -28,7 +28,7 @@ potentially avoid making amateur mistakes. But, again, human errors are still to
 increase the cost of having to train these people.
 
 # Timeline
-![image](https://github.com/poohzaza166/tax-rnd-ocr/assets/145421337/cb41ba7c-813a-432f-bd66-442b7fab8030)
+![image](https://github.com/poohzaza166/tax-rnd-ocr/assets/145421337/1bfeb6a1-6d8d-4d92-b0dc-8af210afeff7)
 
 
 # Team Member
