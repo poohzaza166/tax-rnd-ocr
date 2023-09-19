@@ -29,6 +29,9 @@ increase the cost of having to train these people.
 
 # Timeline
 
+![image](https://github.com/poohzaza166/tax-rnd-ocr/assets/145421337/d5d09587-758c-430c-a96f-02c0c7725b1c)
+
+
 # Team Member
 Bhumin Sabsrisupachai (Pooh)
 
