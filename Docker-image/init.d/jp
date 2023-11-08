@@ -1,0 +1,40 @@
+#!/sbin/openrc-run
+
+description="Jupyter Notebook"
+
+pidfile="/run/jupyter.pid"
+
+command="/opt/conda/bin/python"
+
+command_args="-m jupyter-lab --notebook-dir=/home/user/notebooks --no-browser --bind=0.0.0.0" 
+
+output_log="/var/log/jupyter.log"
+
+error_log="/var/log/jupyter.log"
+
+user="user"
+
+group="user"
+
+depend() {
+  need localmount net
+#   after mariadb nginx
+}
+
+start() {
+  ebegin "Starting Jupyter Notebook"
+  start-stop-daemon --start --pidfile $pidfile --exec $command --chuid $user:$group -- $command_args >> $output_log 2>&1
+  eend $?
+}
+
+stop() {
+  ebegin "Stopping Jupyter Notebook"
+  start-stop-daemon --stop --pidfile $pidfile
+  eend $?
+}
+
+restart() {
+  stop
+  sleep 10
+  start
+}

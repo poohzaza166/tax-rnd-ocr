@@ -1,0 +1,30 @@
+#!/sbin/openrc-run
+
+description="code-server"
+
+pidfile="/var/run/code-server.pid"
+
+command="/usr/bin/code-server"
+
+command_args="--bind-addr 0.0.0.0:8080 --user-data-dir /data/code-server --auth password"
+
+output_log="/var/log/code-server.log"
+
+error_log="/var/log/code-server.log"
+
+depend() {
+  need localmount net
+#   after nginx
+}
+
+start() {
+  ebegin "Starting code-server"
+  start-stop-daemon --start --pidfile $pidfile --exec $command -- $command_args >> $output_log 2>&1
+  eend $?
+}
+
+stop() {
+  ebegin "Stopping code-server"
+  start-stop-daemon --stop --pidfile $pidfile
+  eend $?
+}

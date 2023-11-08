@@ -4,8 +4,18 @@ FROM nvidia/cuda:12.1.0-devel-ubuntu20.04
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive 
 
+# ARG S6_OVERLAY_VERSION=3.1.5.0
 
-RUN apt -q update && apt -yq upgrade && apt install -yq systemd curl git sudo gcc build-essential locales\
+# ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+# RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+# ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+# RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+RUN apt -q update && apt -yq upgrade && apt install -yq curl git sudo gcc build-essential locales\
         libbz2-dev libcurl4-gnutls-dev vim dos2unix apt-file tree git zip unzip cmake wget ca-certificates locales fonts-liberation run-one \
         libglib2.0-0 libxext6 libsm6 libxrender1 mercurial subversion zlib1g-dev gridsite-clients \
         libbz2-dev libncursesw5-dev liblzma-dev libssl-dev build-essential \
@@ -13,9 +23,10 @@ RUN apt -q update && apt -yq upgrade && apt install -yq systemd curl git sudo gc
         autoconf automake make gcc perl zlib1g-dev libbz2-dev liblzma-dev libssl-dev libncurses5-dev \
         tzdata net-tools psmisc iproute2 cron bind9-dnsutils \
         libssl-dev libxml2-dev libmariadbclient-dev libpq-dev unixodbc unixodbc-dev libcairo2-dev libgtk2.0-dev \
-        openjdk-11-jdk rsync imagemagick libhdf5-dev git htop zsh htop dumb-init
+        openjdk-11-jdk rsync imagemagick libhdf5-dev git htop zsh htop dumb-init 
 
-RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+
+# RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 
 ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
@@ -48,6 +59,11 @@ RUN apt -q -y autoremove \
     && conda clean --all --yes
 
 RUN conda init bash
+
+# RUN pip install docker-systemctl-replacement
+
+COPY files/docker/systemctl3.py /usr/bin/systemctl
+
 #COPY etc/conda_env.sh /opt/jupyterhub/
 #RUN bash /opt/jupyterhub/conda_env.sh \
 #  && cat /opt/jupyterhub/conda_env.sh >> /etc/bash.bashrc \
@@ -59,7 +75,7 @@ RUN  conda install -y -c conda-forge jupyterhub jupyterlab \
 
 # Port just for Jupyter 
 EXPOSE 8888
-EXPOSE 8443
+EXPOSE 8080
 
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
@@ -73,33 +89,47 @@ RUN ARCH="$(dpkg --print-architecture)" \
 RUN mkdir -p /opt/jupyterhub
 # COPY etc/jupyterhub_config.py /opt/jupyterhub/
 
-RUN ls etc
+RUN ls /opt/conda/bin/
 
-COPY etc/jupyterhub.service /etc/systemd/system/
-COPY etc/code-server.service /etc/systemd/system/
-
-# add local files
-
-RUN mkdir /data
 VOLUME /data
 
-# USER 1000351
 
-HEALTHCHECK NONE
+ENTRYPOINT ["/tini" ,"--"]
 
-RUN systemctl enable jupyterhub
+CMD ["/bin/bash", "-c", "/opt/conda/bin/jupyter-lab --allow-root --no-browser --ip=0.0.0.0 & code-server --auth none --bind-addr 0.0.0.0:8080"]
 
-RUN systemctl enable code-server
+# CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080"]
 
-RUN systemctl set-default multi-user.target
+# CMD [ "/usr/bin/bash" ]
+# CMD ["/opt/conda/bin/jupyter-lab", "--allow-root", "--no-browser", "--ip=0.0.0.0"]
+# CMD ["/bin/bash", "-c", "/opt/conda/bin/jupyter-lab --no-browser --ip=0.0.0.0 & && code-server --auth none --bind-addr 0.0.0.0:8080 &"]
+# COPY etc/jupyterhub.service /etc/systemd/system/
+# COPY etc/code-server.service /etc/systemd/system/
 
-STOPSIGNAL SIGRTMIN+3
+# # add local files
 
-RUN systemctl set-default multi-user.target
+# RUN mkdir /data
 
-STOPSIGNAL SIGRTMIN+3
+# # USER 1000351d
+
+# HEALTHCHECK NONE
+
+# RUN systemctl enable jupyterhub
+
+# RUN systemctl enable code-server
+
+# RUN systemctl set-default multi-user.target
+
+# STOPSIGNAL SIGRTMIN+3
+
+# RUN systemctl set-default multi-user.target
+
+# STOPSIGNAL SIGRTMIN+3
 
 # RUN chmod +x /usr/bin/get-bin
-CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+# CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
 # CMD ['jupyter', "lab", "--ip=0.0.0.0"]
 # Start Jupyter by default
+
+# ENTRYPOINT ["/init"]
+# CMD ['/usr/bin/systemctl']
