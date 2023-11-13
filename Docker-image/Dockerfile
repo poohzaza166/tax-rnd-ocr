@@ -23,7 +23,7 @@ RUN apt -q update && apt -yq upgrade && apt install -yq curl git sudo gcc build-
         autoconf automake make gcc perl zlib1g-dev libbz2-dev liblzma-dev libssl-dev libncurses5-dev \
         tzdata net-tools psmisc iproute2 cron bind9-dnsutils \
         libssl-dev libxml2-dev libmariadbclient-dev libpq-dev unixodbc unixodbc-dev libcairo2-dev libgtk2.0-dev \
-        openjdk-11-jdk rsync imagemagick libhdf5-dev git htop zsh htop dumb-init 
+        openjdk-11-jdk rsync imagemagick libhdf5-dev git htop zsh htop dumb-init libopencv-dev tesseract-ocr-tha 
 
 
 # RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
