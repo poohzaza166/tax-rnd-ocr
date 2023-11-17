@@ -76,6 +76,7 @@ RUN  conda install -y -c conda-forge jupyterhub jupyterlab \
 # Port just for Jupyter 
 EXPOSE 8888
 EXPOSE 8080
+EXPOSE 22
 
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
@@ -93,10 +94,15 @@ RUN ls /opt/conda/bin/
 
 VOLUME /data
 
+RUN install openssh-server
 
 ENTRYPOINT ["/tini" ,"--"]
 
-CMD ["/bin/bash", "-c", "/opt/conda/bin/jupyter-lab --allow-root --no-browser --ip=0.0.0.0 & code-server --auth none --bind-addr 0.0.0.0:8080"]
+RUN mkdir /var/run/sshd
+RUN echo 'root:root123' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+CMD ["/bin/bash", "-c", "/opt/conda/bin/jupyter-lab --allow-root --no-browser --ip=0.0.0.0 & code-server --auth none --bind-addr 0.0.0.0:8080 & /usr/sbin/sshd -D"]
 
 # CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080"]
 
