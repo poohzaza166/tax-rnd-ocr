@@ -4,3 +4,8 @@ setup the api to the database
 
 look at the frontend code from figma
 findout what i need to do to make it work
+
+create the fucntion to store shit
+create the function to trigger the processing pipeline for the extracting data from recipe part
+
+encapsulate the infrence code and intgrade it with the main database
