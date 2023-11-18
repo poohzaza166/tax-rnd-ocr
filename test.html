@@ -1,11 +1,135 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>My Web Page</title>
+    <title>Expense Tracker</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-  <h1>Welcome to My Web Page</h1>
-  <p>This is a simple web page.</p>
+    <h1>Expense Tracker</h1>
+
+    <form id="registerForm">
+        <label for="userId">User ID:</label>
+        <input type="number" id="userId" name="userId" required>
+        <label for="userName">Name:</label>
+        <input type="text" id="userName" name="userName" required>
+        <label for="userAge">Age:</label>
+        <input type="number" id="userAge" name="userAge" required>
+        <button type="submit">Register</button>
+    </form>
+
+    <form id="incomeForm">
+        <label for="incomeAmount">Income Amount:</label>
+        <input type="number" id="incomeAmount" name="incomeAmount" step="0.01" required>
+        <label for="incomeItem">Income Item:</label>
+        <input type="text" id="incomeItem" name="incomeItem" required>
+        <button type="submit">Log Income</button>
+    </form>
+
+    <form id="expenseForm">
+        <label for="expenseAmount">Expense Amount:</label>
+        <input type="number" id="expenseAmount" name="expenseAmount" step="0.01" required>
+        <label for="expenseItem">Expense Item:</label>
+        <input type="text" id="expenseItem" name="expenseItem" required>
+        <button type="submit">Log Expense</button>
+    </form>
+
+    <div id="transactions"></div>
+
+    <script>
+        // Specify the IP address and port of your backend API
+        var apiBaseUrl = "http://127.0.0.1:8000";
+
+        // Register user
+        $("#registerForm").submit(function(event) {
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var userName = $("#userName").val();
+            var userAge = $("#userAge").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/user",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, user_name: userName, user_age: userAge }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to register user");
+                    console.log(error);
+                }
+            });
+        });
+
+        // Log income
+        $("#incomeForm").submit(function(event) {
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var incomeAmount = $("#incomeAmount").val();
+            var incomeItem = $("#incomeItem").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/users/" + userId + "/income",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, amount: incomeAmount, item: incomeItem }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to log income");
+                }
+            });
+        });
+
+        // Log expense
+        $("#expenseForm").submit(function(event) {
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var expenseAmount = $("#expenseAmount").val();
+            var expenseItem = $("#expenseItem").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/users/" + userId + "/expenses",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, amount: expenseAmount, item: expenseItem }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to log expense");
+                }
+            });
+        });
+
+        // Get user transactions
+        function getUserTransactions() {
+            var userId = $("#userId").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/users/" + userId + "/transactions",
+                type: "GET",
+                success: function(response) {
+                    var transactions = response.income.concat(response.expenses);
+                    var transactionsHtml = "";
+
+                    transactions.forEach(function(transaction) {
+                        transactionsHtml += "<p>" + transaction.item + ": $" + transaction.amount + "</p>";
+                    });
+
+                    $("#transactions").html(transactionsHtml);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to get user transactions");
+                }
+            });
+        }
+
+        // Refresh user transactions on page load
+        $(document).ready(function() {
+            getUserTransactions();
+        });
+    </script>
 </body>
 </html>
