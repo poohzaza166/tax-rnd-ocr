@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Response
-from .orm import Session, User, Income, Expense, Savings
+from .orm import Session, User, Income, Expense
 from pydantic import BaseModel
 
 import logging
@@ -18,12 +18,6 @@ class UserTransaction(BaseModel):
     amount: int
     item: str
 
-
-class UserSaving(BaseModel):
-    user_id: int
-    amount: int
-    item: str
-    priority: int
 
 # create a route to register a user
 @app.post("/user")
@@ -133,7 +127,6 @@ def get_transactions(user_id: int):
         income = []
         expenses = []
         logging.error(e)
-        return {"message": "User currently dose not have any transactions history"}
     
     # close the session
     session.close()
@@ -143,50 +136,11 @@ def get_transactions(user_id: int):
     # return the income and expenses
     return {"income": income, "expenses": expenses}
 
-#create user saving goal
-@app.post("/users/{user_id}/savings")
-def add_savings(savings: UserSaving):
-    session = Session()
+# @app.options("/users")
+# def options_users(response: Response):
+#     response.headers["Allow"] = "POST, OPTIONS"
+#     return response
 
-    # get the user by ID
-    user = session.query(User).filter_by(id=savings.user_id).first()
-
-    # create a new expense instance
-    saving = Savings(amount=savings.amount, item=savings.item, priority=savings.priority, user=user)
-    session.add(saving)
-    session.commit()
-    session.close()
-    return {"message": "Savings added successfully"}
-
-# remove user saved goal
-@app.post("/users/{user_id}/savings/{saving_id}")
-def remove_savings(saving_id: int):
-    session = Session()
-    saving = session.query(Savings).filter_by(id=saving_id).first()
-    if saving_id is None:
-        return {"message": "Savings does not exist"}
-    session.delete(saving)
-    session.commit()
-    session.close()
-    return {"message": "Savings removed successfully"}
-
-# get user savings
-@app.get("/users/{user_id}/savings")
-def get_savings(user_id: int):
-    session = Session()
-    try:
-        user = session.query(User).filter_by(id=user_id).first()
-        savings = [{'amount': s.amount, 'item': s.item, 'priority': s.priority} for s in user.savings]
-    except AttributeError as e:
-        savings = []
-        logging.error(e)
-        return {"message": "User currently dose not have any savings"}
-    
-    session.close()
-    return {"savings": savings}
-
-
-    
 if __name__ == "__main__":
     import uvicorn
     
