@@ -60,6 +60,7 @@ class Expense(Base):
         self.user = user
 
 
+
 class Savings(Base):
     __tablename__ = 'savings'
 

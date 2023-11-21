@@ -96,18 +96,18 @@ class trainLM():
         answers = self.data["answer"]
 
         # encode the batch of examples and initialize the start_positions and end_positions
-        encoding = tokenizer(questions, words, boxes, max_length=max_length, padding="max_length", truncation=True)
+        encoding = self.tokenizer(questions, words, boxes, max_length=max_length, padding="max_length", truncation=True)
         start_positions = []
         end_positions = []
 
         # loop through the examples in the batch
         for i in range(len(questions)):
-            cls_index = encoding["input_ids"][i].index(tokenizer.cls_token_id)
+            cls_index = encoding["input_ids"][i].index(self.tokenizer.cls_token_id)
 
             # find the position of the answer in example's words
             words_example = [word.lower() for word in words[i]]
             answer = answers[i]
-            match, word_idx_start, word_idx_end = subfinder(words_example, answer.lower().split())
+            match, word_idx_start, word_idx_end = self.subfinder(words_example, answer.lower().split())
 
             if match:
                 # if match is found, use `token_type_ids` to find where words start in the encoding
