@@ -68,14 +68,14 @@ class Savings(Base):
     amount = Column(Integer)
     item = Column(String)
     transaction_time = Column(DateTime, default=datetime.now)
-    priotity = Column(Integer)
+    priority = Column(Integer)
+    user_id = Column(Integer, ForeignKey('users.id'))  # Add this line
     user = relationship('User', back_populates='savings')
 
     def __init__(self, amount, item, priority):
         self.amount = amount
         self.item = item
         self.priority = priority
-
 
 if __name__ == "__main__":
     # create the database tables
@@ -97,6 +97,7 @@ if __name__ == "__main__":
     # log an expense
     expense = Expense(amount=1000, item='Rent', user=user)
     session.add(expense)
+
 
     # commit the transaction
     session.commit()
