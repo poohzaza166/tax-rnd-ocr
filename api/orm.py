@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+from datetime import datetime
 
 # create the database engine
 engine = create_engine('sqlite:///example.db', echo=True)
@@ -20,6 +21,7 @@ class User(Base):
     age = Column(Integer)
     income = relationship('Income', back_populates='user')
     expenses = relationship('Expense', back_populates='user')
+    savings = relationship('Savings', back_populates='user')
 
     def __init__(self, name, age):
         self.name = name
@@ -32,13 +34,15 @@ class Income(Base):
     id = Column(Integer, primary_key=True)
     amount = Column(Float)
     item = Column(String)
+    transaction_time = Column(DateTime, default=datetime.now)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', back_populates='income')
 
-    def __init__(self, amount, item, user):
+    def __init__(self, amount, item, user, transaction_time=None):
         self.amount = amount
         self.item = item
         self.user = user
+        self.transaction_time = transaction_time or datetime.now()
 
 # define a model class for expenses
 class Expense(Base):
@@ -47,14 +51,31 @@ class Expense(Base):
     id = Column(Integer, primary_key=True)
     amount = Column(Integer)
     item = Column(String)
+    transaction_time = Column(DateTime, default=datetime.now)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', back_populates='expenses')
 
-    def __init__(self, amount, item, user):
+    def __init__(self, amount, item, user, transaction_time=None):
         self.amount = amount
         self.item = item
         self.user = user
+        self.transaction_time = transaction_time or datetime.now()
 
+class Savings(Base):
+    __tablename__ = 'savings'
+
+    id = Column(Integer, primary_key=True)
+    amount = Column(Integer)
+    item = Column(String)
+    transaction_time = Column(DateTime, default=datetime.now)
+    priority = Column(Integer)
+    user_id = Column(Integer, ForeignKey('users.id'))  # Add this line
+    user = relationship('User', back_populates='savings')
+
+    def __init__(self, amount, item, priority):
+        self.amount = amount
+        self.item = item
+        self.priority = priority
 
 if __name__ == "__main__":
     # create the database tables
@@ -87,6 +108,6 @@ if __name__ == "__main__":
     for user in users:
         print(user.name, user.age)
         for income in user.income:
-            print('Income:', income.amount, income.item)
+            print('Income:', income.amount, income.item, income.transaction_time)
         for expense in user.expenses:
-            print('Expense:', expense.amount, expense.item)
+            print('Expense:', expense.amount, expense.item, expense.transaction_time)
