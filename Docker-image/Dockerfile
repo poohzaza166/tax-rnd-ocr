@@ -3,6 +3,10 @@ FROM nvidia/cuda:12.1.0-devel-ubuntu20.04
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive 
+ENV OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
+ENV OPENVSCODE="${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server"
+
+SHELL ["/bin/bash", "-c"]
 
 # ARG S6_OVERLAY_VERSION=3.1.5.0
 
@@ -78,14 +82,16 @@ EXPOSE 8888
 EXPOSE 8080
 EXPOSE 22
 
-RUN curl -fsSL https://code-server.dev/install.sh | sh
+# RUN curl -fsSL https://code-server.dev/install.sh | sh
 
-RUN ARCH="$(dpkg --print-architecture)" \
-  && curl -fsSL "https://github.com/boxboat/fixuid/releases/download/v0.5/fixuid-0.5-linux-$ARCH.tar.gz" | tar -C /usr/local/bin -xzf - \
-  && chown root:root /usr/local/bin/fixuid \
-  && chmod 4755 /usr/local/bin/fixuid \
-  && mkdir -p /etc/fixuid \
-  && printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
+# RUN ARCH="$(dpkg --print-architecture)" \
+#   && curl -fsSL "https://github.com/boxboat/fixuid/releases/download/v0.5/fixuid-0.5-linux-$ARCH.tar.gz" | tar -C /usr/local/bin -xzf - \
+#   && chown root:root /usr/local/bin/fixuid \
+#   && chmod 4755 /usr/local/bin/fixuid \
+#   && mkdir -p /etc/fixuid \
+#   && printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
+
+RUN curl -o  https://github.com/gitpod-io/openvscode-server/releases/download/openvscode-server-v1.84.0/openvscode-server-v1.84.0-linux-x64.tar.gz
 
 RUN mkdir -p /opt/jupyterhub
 # COPY etc/jupyterhub_config.py /opt/jupyterhub/

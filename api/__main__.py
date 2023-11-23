@@ -136,6 +136,12 @@ def get_transactions(user_id: int):
     # return the income and expenses
     return {"income": income, "expenses": expenses}
 
+@app.options("/llm/{user_id}/{doc_id}")
+def ans_question(user_id: int, doc_id: int):
+    logging.log("test hello world")
+    
+    
+
 # @app.options("/users")
 # def options_users(response: Response):
 #     response.headers["Allow"] = "POST, OPTIONS"

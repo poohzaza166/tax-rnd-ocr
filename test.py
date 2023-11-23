@@ -3,7 +3,7 @@ import tesserocr
 import cv2
 import fastapi
 
-app = 
+app = fastapi()
 
 img_rgb = cv2.imread("test.png")
 img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)

@@ -17,7 +17,7 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String,unique=True)
     age = Column(Integer)
     income = relationship('Income', back_populates='user')
     expenses = relationship('Expense', back_populates='user')
@@ -26,6 +26,8 @@ class User(Base):
     def __init__(self, name, age):
         self.name = name
         self.age = age
+
+
 
 # define a model class for income
 class Income(Base):
