@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+import uuid
 from datetime import datetime
 
 # create the database engine
@@ -16,7 +17,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True, default=str(uuid.uuid4()))
     name = Column(String,unique=True)
     age = Column(Integer)
     income = relationship('Income', back_populates='user')
@@ -33,40 +34,45 @@ class User(Base):
 class Income(Base):
     __tablename__ = 'income'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True, default=str(uuid.uuid4()))
     amount = Column(Float)
     item = Column(String)
     transaction_time = Column(DateTime, default=datetime.now)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', back_populates='income')
+    image_path = Column(String)
 
-    def __init__(self, amount, item, user, transaction_time=None):
+    def __init__(self, amount, item, user, image_path=None, transaction_time=None):
         self.amount = amount
         self.item = item
         self.user = user
         self.transaction_time = transaction_time or datetime.now()
+        self.image_path = image_path
 
 # define a model class for expenses
 class Expense(Base):
     __tablename__ = 'expenses'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True, default=str(uuid.uuid4()))
     amount = Column(Integer)
     item = Column(String)
     transaction_time = Column(DateTime, default=datetime.now)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', back_populates='expenses')
+    image_path = Column(String)
 
-    def __init__(self, amount, item, user, transaction_time=None):
+
+    def __init__(self, amount, item, user, image_path= None, transaction_time=None):
         self.amount = amount
         self.item = item
         self.user = user
         self.transaction_time = transaction_time or datetime.now()
+        self.image_path = image_path
 
 class Savings(Base):
     __tablename__ = 'savings'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True, default=str(uuid.uuid4()))
     amount = Column(Integer)
     item = Column(String)
     transaction_time = Column(DateTime, default=datetime.now)
@@ -97,7 +103,7 @@ if __name__ == "__main__":
     session.add(income)
 
     # log an expense
-    expense = Expense(amount=1000, item='Rent', user=user)
+    expense = Expense(amount=1000, item='Rent', user=user, image_path="/home/username/Downloads/expense.jpg")
     session.add(expense)
 
     # commit the transaction

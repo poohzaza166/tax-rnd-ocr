@@ -1,27 +1,66 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, File, UploadFile, status, HTTPException
 from .orm import Session, User, Income, Expense
 from pydantic import BaseModel
+from typing import Optional
+import os
+from fastapi.middleware.cors import CORSMiddleware
+
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI(debug=True)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class UserRegistration(BaseModel):
-    user_id: int
+    """
+    User registration data model.
+    """
+    user_id: Optional[str]
     user_name: str
     user_age: int
 
 class UserTransaction(BaseModel):
-    user_id: int
+    """
+    User transaction data model.
+    """
+    user_id: str
     amount: int
     item: str
+
+
+class LLMquery(BaseModel):
+    """
+    LLM query data model.
+    """
+    user_id: str
+    doc_id: int
+    type: str
+    question: str
+    
+class UploadImage(BaseModel):
+    """
+    Upload image data model.
+    """
+    user_id: str
+    doc_id: str
+    trasnaction_type: str
+    image: UploadFile 
 
 
 # create a route to register a user
 @app.post("/user")
 def register_user(auser: UserRegistration):
+    """
+    Register a new user.
+    """
+    
     logging.debug('bonjour')
     print('bonjour')
     print(auser)
@@ -30,13 +69,10 @@ def register_user(auser: UserRegistration):
         session = Session()
 
         # check if the user already exists
-        user = session.query(User).filter_by(id=auser.user_id).first()
+        user = session.query(User).filter_by(name=auser.user_name).first()
         if user:
-            user = session.query(User).filter_by(name=auser.user_name).first()
-            if user:
-                return {"message": "User already exists"}
+            return {"message": "User already exists", "user": user.id}
         
-            return {"message": "User already exists with different id"}
         else:
         # create a new user instance
             user = User(name=auser.user_name, age=auser.user_age)
@@ -60,11 +96,37 @@ def register_user(auser: UserRegistration):
         # close the session
         session.close()
 
+
+def is_User_valid(user_id: str) -> bool:
+    '''
+    Function to check if the user exists
+    Arguments:
+    user_id: the user's ID
+    Returns: True if the user exists, False otherwise'''
+    # create a session
+    session = Session()
+
+    # check if the user already exists
+    user = session.query(User).filter_by(id=user_id).first()
+    if user:
+        return True
+    else:
+        return False
+
 # create a route to log income
 @app.post("/users/{user_id}/income")
 def log_income(users: UserTransaction):
+    '''
+    Function to log income
+    Arguments:
+    users: the user's ID, amount and item
+    Returns: a success message
+    '''
     # create a session
     session = Session()
+
+    if is_User_valid(users.user_id) == False:
+        raise HTTPException(400, {"message": "User does not exist" })
 
     # get the user by ID
     user = session.query(User).filter_by(id=users.user_id).first()
@@ -78,19 +140,28 @@ def log_income(users: UserTransaction):
     # commit the transaction
     session.commit()
 
-    # close the session
-    session.close()
+    # # close the session
+    # session.close()
 
     # return a success message
-    return {"message": "Income logged successfully"}
+    return {"message": "Income logged successfully", "id": income.id}
 
 
 # create a route to log expenses
 @app.post("/users/{user_id}/expenses")
 def log_expense(users: UserTransaction):
+    '''
+    Function to log expenses
+    Arguments:
+    users: the user's ID, amount and item
+    Returns: a success message
+    '''
     # create a session
     session = Session()
 
+    if is_User_valid(users.user_id) == False:
+        raise HTTPException(400, {"message": "User does not exist" })
+    
     # get the user by ID
     user = session.query(User).filter_by(id=users.user_id).first()
 
@@ -104,18 +175,27 @@ def log_expense(users: UserTransaction):
     session.commit()
 
     # close the session
-    session.close()
+    # session.close()
 
     # return a success message
-    return {"message": "Expense logged successfully"}
+    return {"message": "Expense logged successfully", "id": expense.id}
 
 # create a route to get user income and expenses
 @app.get("/users/{user_id}/transactions")
-def get_transactions(user_id: int):
+def get_transactions(user_id: str):
+    '''
+    Function to get user income and expenses
+    Arguments:
+    user_id: the user's ID
+    Returns: a dictionary of income and expenses
+    '''
     logging.debug('i have been ran')
     # create a session
     session = Session()
 
+    if is_User_valid(user_id) == False:
+        raise HTTPException(400, {"message": "User does not exist" })
+    
     # get the user by ID
     user = session.query(User).filter_by(id=user_id).first()
 
@@ -136,18 +216,57 @@ def get_transactions(user_id: int):
     # return the income and expenses
     return {"income": income, "expenses": expenses}
 
-@app.options("/llm/{user_id}/{doc_id}")
-def ans_question(user_id: int, doc_id: int):
+@app.options("/llm/")
+def ans_question(query: LLMquery):
+    '''
+    Function to answer question
+    Arguments:
+    query: the user's ID, document ID, question and type of document
+    Returns: a dictionary of the answer'''
     logging.log("test hello world")
-    
-    
+    print(query)
 
-# @app.options("/users")
-# def options_users(response: Response):
-#     response.headers["Allow"] = "POST, OPTIONS"
-#     return response
+@app.post("/upload-image")
+def upload_image(img: UploadImage):
+    '''
+    Function to upload image
+    Arguments:
+    img: the user's ID, document ID, type of document and image
+    Returns: a success message
+    '''
+    # Save the file to a specific location
+    session = Session()
+    user = session.query(User).filter_by(id=img.user_id).first()
+
+    if is_User_valid(user.user_id) == False:
+        raise HTTPException(400, {"message": "User does not exist" })
+    
+    if img.transaction_type == "income":
+        income = session.query(Income).filter_by(id=img.doc_id).first()
+        session.add(income)
+        session.commit()
+        session.close()
+        file = open(os.path.join("income", f"{img.doc_id}.jpg"), "wb+")
+        file.write(img.image)
+        file.close()
+    elif img.trasnaction_type == "expense":
+        expense = session.query(Expense).filter_by(id=img.doc_id).first()
+        session.add(expense)
+        session.commit()
+        session.close()
+        file = open(os.path.join("expense", f"{img.doc_id}.jpg"), "wb+")
+        file.write(img.image)
+        file.close()
+    else:
+        raise HTTPException(status_code=400, detail="Malform request server only accepts income or expense")
+    
+    return {"message": "Image uploaded successfully", "imge_path": "YES"}
+
+@app.options("/user")
+def options_user():
+    return Response(status_code=status.HTTP_200_OK)
 
 if __name__ == "__main__":
     import uvicorn
     
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level=logging.DEBUG, access_log=True,)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level=logging.DEBUG, access_log=True,)

@@ -9,12 +9,25 @@
 
     <form id="registerForm">
         <label for="userId">User ID:</label>
-        <input type="number" id="userId" name="userId" required>
+        <input type="text" id="userId" name="userId">
         <label for="userName">Name:</label>
         <input type="text" id="userName" name="userName" required>
         <label for="userAge">Age:</label>
         <input type="number" id="userAge" name="userAge" required>
         <button type="submit">Register</button>
+    </form>
+
+    <form id="uploadForm">
+        <label for="docId">Document ID:</label>
+        <input type="text" id="docId" name="docId">
+        <label for="transactionType">Transaction Type:</label>
+        <select id="transactionType" name="transactionType">
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+        <label for="imageFile">Image File:</label>
+        <input type="file" id="imageFile" name="imageFile" accept="image/*" required>
+        <button type="submit">Upload Image</button>
     </form>
 
     <form id="incomeForm">
@@ -34,6 +47,8 @@
     </form>
 
     <div id="transactions"></div>
+
+    <button id="getTransactionsButton">Get User Transactions</button>
 
     <script>
         // Specify the IP address and port of your backend API
@@ -104,6 +119,10 @@
         });
 
         // Get user transactions
+        $("#getTransactionsButton").click(function() {
+            getUserTransactions();
+        });
+
         function getUserTransactions() {
             var userId = $("#userId").val();
 
@@ -130,6 +149,35 @@
         $(document).ready(function() {
             getUserTransactions();
         });
+
+        // Upload image
+        $("#uploadForm").submit(function(event) {
+        event.preventDefault();
+        var userId = $("#userId").val();
+        var docId = $("#docId").val();
+        var transactionType = $("#transactionType").val();
+        var imageFile = $("#imageFile")[0].files[0];
+
+        var formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("doc_id", docId);
+        formData.append("transaction_type", transactionType);
+        formData.append("image", imageFile);
+
+        $.ajax({
+            url: apiBaseUrl + "/upload-image",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                alert(response.message);
+            },
+            error: function(xhr, status, error) {
+                alert("Failed to upload image");
+            }
+        });
+    });
     </script>
 </body>
 </html>
