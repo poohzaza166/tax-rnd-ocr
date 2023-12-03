@@ -27,16 +27,17 @@ class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
                 chunk  = self.tokenizer.decode(window)
                 # print(chunk)
                 if self.stopstring in chunk:
-                    if self.count >=3:
+                    # if self.count >=1:
                         # print("++++++++++++++")
                         # print(chunk)
-                        print('stop reason token hit')
+                        # print(self.stopstring)
+                        # print('stop reason token hit')
                         # print('=======================')
-                        self.count = 0
-                        return True
+                        # self.count = 0
+                    return True
                     # print(self.count)
-                    self.count += 1
-                    return False
+                    # self.count += 1
+                    # return False
                 if torch.all(torch.eq(self.sentinel_token_ids, window)):
                     return True
                 
