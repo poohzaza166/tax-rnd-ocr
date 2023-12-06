@@ -249,7 +249,7 @@ def upload_image(img: UploadImage):
         file = open(os.path.join("income", f"{img.doc_id}.jpg"), "wb+")
         file.write(img.image)
         file.close()
-    elif img.trasnaction_type == "expense":
+    elif img.transaction_type == "expense":
         expense = session.query(Expense).filter_by(id=img.doc_id).first()
         session.add(expense)
         session.commit()
