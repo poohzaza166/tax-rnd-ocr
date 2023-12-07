@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Image</title>
+</head>
+<body>
+
+<h2>Upload Image</h2>
+
+<form id="imageUploadForm" enctype="multipart/form-data" method="post">
+    <label for="userId">User ID:</label>
+    <input type="text" id="userId" name="user_id" required>
+    
+    <label for="docId">Document ID:</label>
+    <input type="text" id="docId" name="doc_id" required>
+    
+    <label for="transactionType">Transaction Type:</label>
+    <select name="transaction_type" id="transactionType" required>
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+    </select>
+    
+    <label for="imageFile">Select image:</label>
+    <input type="file" id="imageFile" name="image" accept="image/*" required>
+    
+    <input type="submit" value="Upload Image">
+</form>
+
+<script>
+    document.getElementById('imageUploadForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Gather form data
+        const formData = new FormData(this);
+
+        // Perform the AJAX request
+        fetch('http://localhost:8000/upload-image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            alert('Image uploaded successfully!');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to upload the image.');
+        });
+    });
+</script>
+
+</body>
+</html>

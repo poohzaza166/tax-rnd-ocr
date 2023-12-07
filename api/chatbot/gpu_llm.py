@@ -83,10 +83,10 @@ class GpuLLM(LLM):
         #     sentinel_tokens_input_ids = self._tokenizer(stop_msg, add_special_tokens=False, return_tensors="pt").input_ids.to("cuda")
         #     stopid = _SentinelTokenStoppingCriteria(stop_msg, tokenizer=self._tokenizer, num_repeats=1)
         #     stop_token_list.append(stopid)
-        
-        for stop_msg in stop:
-            sentinel_token_ids_assistant = self._tokenizer(stop_msg, add_special_tokens=False, return_tensors="pt").input_ids.to("cuda")
-            stop_token_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids_assistant, starting_idx=tokenize.shape[-1], stop_string=stop_msg, tokenizer=self._tokenizer))
+        if stop != None:        
+            for stop_msg in stop:
+                sentinel_token_ids_assistant = self._tokenizer(stop_msg, add_special_tokens=False, return_tensors="pt").input_ids.to("cuda")
+                stop_token_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids_assistant, starting_idx=tokenize.shape[-1], stop_string=stop_msg, tokenizer=self._tokenizer))
       
         if self.stop_msgs != None:
             for stop_msg in self.stop_msgs:
@@ -95,7 +95,10 @@ class GpuLLM(LLM):
         
         # print(self.config.max_length)
         # print(stop_word)
-        stopping_criteria_list = StoppingCriteriaList(stop_token_list)
+        if stop and self.stop_msgs != None:
+            stopping_criteria_list = StoppingCriteriaList(stop_token_list)
+        else:
+            stopping_criteria_list = StoppingCriteriaList(stop_token_list)
 
         output = self._model.generate(
             inputs=tokenized_prompt,

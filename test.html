@@ -54,6 +54,57 @@
         // Specify the IP address and port of your backend API
         var apiBaseUrl = "http://127.0.0.1:8000";
 
+        // Function to retrieve and set form values from localStorage
+        function setFormValues() {
+            var userNameInput = document.getElementById("userName");
+            var userAgeInput = document.getElementById("userAge");
+            var incomeAmountInput = document.getElementById("incomeAmount");
+            var incomeItemInput = document.getElementById("incomeItem");
+            var expenseAmountInput = document.getElementById("expenseAmount");
+            var expenseItemInput = document.getElementById("expenseItem");
+
+            // Retrieve values from localStorage
+            var userName = localStorage.getItem("userName");
+            var userAge = localStorage.getItem("userAge");
+            var incomeAmount = localStorage.getItem("incomeAmount");
+            var incomeItem = localStorage.getItem("incomeItem");
+            var expenseAmount = localStorage.getItem("expenseAmount");
+            var expenseItem = localStorage.getItem("expenseItem");
+
+            // Set values of input elements
+            userNameInput.value = userName;
+            userAgeInput.value = userAge;
+            incomeAmountInput.value = incomeAmount;
+            incomeItemInput.value = incomeItem;
+            expenseAmountInput.value = expenseAmount;
+            expenseItemInput.value = expenseItem;
+        }
+
+        // Event listeners for input elements to update localStorage
+        $("#userName").on("input", function() {
+            localStorage.setItem("userName", this.value);
+        });
+
+        $("#userAge").on("input", function() {
+            localStorage.setItem("userAge", this.value);
+        });
+
+        $("#incomeAmount").on("input", function() {
+            localStorage.setItem("incomeAmount", this.value);
+        });
+
+        $("#incomeItem").on("input", function() {
+            localStorage.setItem("incomeItem", this.value);
+        });
+
+        $("#expenseAmount").on("input", function() {
+            localStorage.setItem("expenseAmount", this.value);
+        });
+
+        $("#expenseItem").on("input", function() {
+            localStorage.setItem("expenseItem", this.value);
+        });
+
         // Register user
         $("#registerForm").submit(function(event) {
             event.preventDefault();
@@ -118,6 +169,48 @@
             });
         });
 
+        $("#uploadForm").submit(function(event) {
+        event.preventDefault();
+        var userId = $("#userId").val();
+        var docId = $("#docId").val();
+        var transactionType = $("#transactionType").val();
+        var imageFile = $("#imageFile")[0].files[0];
+
+        var formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("doc_id", docId);
+        formData.append("transaction_type", transactionType);
+        formData.append("image", imageFile, imageFile.name); // Append the image file with its original name
+
+        $.ajax({
+            url: apiBaseUrl + "/upload-image",
+            type: "POST",
+            data: formData,
+            contentType: false, // Set contentType to false to let jQuery infer the correct content type from FormData
+            processData: false, // Prevent jQuery from converting the FormData into a string
+            success: function(response) {
+                alert(response.message);
+            },
+            error: function(xhr, status, error) {
+                alert("Failed to upload image: " + error);
+            }
+            });
+        $.ajax({
+                url: apiBaseUrl + "/sort-image/",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, doc_id: docId, transaction_type: transactionType }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to sort image");
+                }
+            
+            })
+        });
+
+
         // Get user transactions
         $("#getTransactionsButton").click(function() {
             getUserTransactions();
@@ -145,39 +238,8 @@
             });
         }
 
-        // Refresh user transactions on page load
-        $(document).ready(function() {
-            getUserTransactions();
-        });
-
-        // Upload image
-        $("#uploadForm").submit(function(event) {
-        event.preventDefault();
-        var userId = $("#userId").val();
-        var docId = $("#docId").val();
-        var transactionType = $("#transactionType").val();
-        var imageFile = $("#imageFile")[0].files[0];
-
-        var formData = new FormData();
-        formData.append("user_id", userId);
-        formData.append("doc_id", docId);
-        formData.append("transaction_type", transactionType);
-        formData.append("image", imageFile);
-
-        $.ajax({
-            url: apiBaseUrl + "/upload-image",
-            type: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function(response) {
-                alert(response.message);
-            },
-            error: function(xhr, status, error) {
-                alert("Failed to upload image");
-            }
-        });
-    });
+        // Call the function to set form values on page load
+        setFormValues();
     </script>
 </body>
 </html>
