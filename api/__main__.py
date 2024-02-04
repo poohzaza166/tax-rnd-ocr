@@ -1,13 +1,16 @@
-from fastapi import FastAPI, Response, File, UploadFile, status, HTTPException
+from fastapi import FastAPI, Response, File, UploadFile, status, HTTPException, Depends, Form
 from .orm import Session, User, Income, Expense
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing import Optional
+from fastapi.exceptions import HTTPException
 import os
+from typing import Optional, List
 from fastapi.middleware.cors import CORSMiddleware
 from .lm_ocr import infrence
 from typing import Annotated
+from fastapi.encoders import jsonable_encoder
 import shutil
-
+import base64
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -45,7 +48,8 @@ class LLMquery(BaseModel):
     LLM query data model.
     """
     user_id: str
-    doc_id: int
+    doc_id: Optional[str]
+    image: Optional[str]
     type: str
     question: str
     
@@ -55,8 +59,8 @@ class UploadImage(BaseModel):
     """
     user_id: str
     doc_id: str
-    trasnaction_type: str
-    # image: Annotated[bytes, File()]
+    transaction_type: str
+    image: str
 
 
 # create a route to register a user
@@ -73,7 +77,7 @@ def register_user(auser: UserRegistration):
         # create a session
         session = Session()
 
-        # check if the user already exists
+        # check if the user already exist
         user = session.query(User).filter_by(name=auser.user_name).first()
         if user:
             return {"message": "User already exists", "user": user.id}
@@ -89,7 +93,7 @@ def register_user(auser: UserRegistration):
         session.commit()
 
         # return a success message
-        return {"message": "User registered successfully"}
+        return {"message": "User registered successfully", "user_id": user.id}
 
     except Exception as e:
         # handle any errors
@@ -221,32 +225,32 @@ def get_transactions(user_id: str):
     # return the income and expenses
     return {"income": income, "expenses": expenses}
 
-@app.options("/llm/")
+@app.post("/llm/")
 def ans_question(query: LLMquery):
     '''
     Function to answer question
     Arguments:
     query: the user's ID, document ID, question and type of document
     Returns: a dictionary of the answer'''
-    logging.log("test hello world")
+    # logging.log("test hello world")
     print(query)
-    layoutlm.runinfrence("test.jpg", "what is the name of the person in the image?")
+    image = base64.b64decode(query.image)
+    # session = Session()
+    # user = session.query(User).filter_by(id=query.user_id).first()
+    # transaction_list = []
+    # for i in user.income:
+    #     transaction_list.append(i)
+    # for i in user.expenses:
+    #     transaction_list.append(i)
+    # for i in transaction_list:
+        # if i.id == query.doc_id:
+    ans = layoutlm.runinfrence(image, query.question)
+    if ans == None:
+        raise HTTPException(400, {"message": "infrence code error "})
+    return {"message": "infrence success", "answer": ans}
 
 @app.post("/upload-image")
-def sort_data(image_id : UploadFile = File(...)):
-    '''
-    Function to sort data
-    Arguments:
-    img: the user's ID, document ID, type of document and image
-    Returns: a success message
-    '''
-    with open("test.jpg", "wb") as buffer:
-        buffer.write(image_id.file.read())
-    
-    return {"message": "Image uploaded successfully", "imge_path": "YES"}   
-
-@app.post("/sort-image")
-def sort_image(img: UploadImage):
+def upload_image(img: UploadImage):
     '''
     Function to upload image
     Arguments:
@@ -255,33 +259,48 @@ def sort_image(img: UploadImage):
     '''
     # print(form_data)
 
+    # print(img)
+
     # Save the file to a specific location
     session = Session()
-    user = session.query(User).filter_by(id=img.user_id).first()
 
-    if is_User_valid(user.user_id) == False:
+    if is_User_valid(img.user_id) == False:
         raise HTTPException(400, {"message": "User does not exist" })
-    
+    # user = session.query(User).filter_by(id=img.user_id).first()
+
     if img.transaction_type == "income":
-        income = session.query(Income).filter_by(id=img.doc_id).first()
-        session.add(income)
-        session.commit()
-        session.close()
-        copy_and_rename_file("test.jpg", "income", str(income.id) + ".jpg")
+        user = session.query(User).filter_by(id=img.user_id).first()
+        print(user.income)
+        for i in user.income:
+            print(i.id)
+            if i.id == img.doc_id:
+                print("yes")
+                income = i
+                income.image_path =  f"./income/{img.doc_id}.jpg"
+                session.commit()
+                session.close()
+                with open(f"./income/{img.doc_id}.jpg", "wb") as buffer:
+                    buffer.write(base64.b64decode(img.image))
+                return {"message": "Image uploaded successfully", "imge_path": "YES"}
 
-
-    elif img.trasnaction_type == "expense":
-        expense = session.query(Expense).filter_by(id=img.doc_id).first()
-        session.add(expense)
-        session.commit()
-        session.close()
-        copy_and_rename_file("test.jpg", "income", str(income.id) + ".jpg")
+        raise HTTPException(400, {"message": "can't find income object in user"})
+    
+    elif img.transaction_type == "expense":
+        user = session.query(User).filter_by(id=img.user_id).first()
+        for i in user.expenses:
+            if i.id == img.doc_id:
+                expense = i
+                expense.image_path = f"./expense/{img.doc_id}.jpg"
+                session.commit()
+                session.close()
+                with open(f"./expense/{img.doc_id}.jpg", "wb") as buffer:
+                    buffer.write(base64.b64decode(img.image))
+                return {"message": "Image uploaded successfully", "imge_path": "YES"}
 
 
     else:
         raise HTTPException(status_code=400, detail="Malform request server only accepts income or expense")
     
-    return {"message": "Image uploaded successfully", "imge_path": "YES"}
 
 @app.options("/user")
 def options_user():
@@ -304,6 +323,25 @@ def copy_and_rename_file(source_file, destination_folder, new_filename):
 
 
 if __name__ == "__main__":
-    import uvicorn
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level=logging.DEBUG, access_log=True,)
+    import argparse
+ 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--chatbot-test",action="store_true", help='enable chatbot test_mode')
+    args = parser.parse_args()
+
+    if args.chatbot_test:
+        print("testing chatbot")
+        from .chatbot.__main__ import Chatbot
+        chatbot = Chatbot()
+        question_list = [
+            "how much money is left in my bank account",
+
+        ]
+        for i in question_list:
+            response = chatbot.run_infrence(i)
+            print(i)
+    else:
+            
+        import uvicorn
+        
+        uvicorn.run(app, host="0.0.0.0", port=8000, log_level=logging.DEBUG, access_log=True,)

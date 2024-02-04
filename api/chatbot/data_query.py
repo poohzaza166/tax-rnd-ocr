@@ -80,3 +80,8 @@ class Get_all_user_transaction(BaseTool):
             message += f"user spent {e['amount']} on {e['item']} with time {e['date']}.\n"
         
         return message
+    
+class Sum_all_user_income:
+    """
+    """
+    name = ""

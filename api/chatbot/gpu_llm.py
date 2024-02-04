@@ -2,7 +2,7 @@ import re
 from typing import List, Optional, Mapping, Any, Union
 from pydantic.v1 import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList
-from stoping_utils import _SentinelTokenStoppingCriteria
+from .stoping_utils import _SentinelTokenStoppingCriteria
 import torch
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun

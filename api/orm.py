@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.inspection import inspect
 import uuid
 from datetime import datetime
 
@@ -49,6 +50,9 @@ class Income(Base):
         self.transaction_time = transaction_time or datetime.now()
         self.image_path = image_path
 
+    def update_image_path(self, image_path):
+        self.image_path = image_path
+
 # define a model class for expenses
 class Expense(Base):
     __tablename__ = 'expenses'
@@ -69,6 +73,9 @@ class Expense(Base):
         self.transaction_time = transaction_time or datetime.now()
         self.image_path = image_path
 
+    def update_image_path(self, image_path):
+        self.image_path = image_path
+
 class Savings(Base):
     __tablename__ = 'savings'
 
@@ -84,6 +91,20 @@ class Savings(Base):
         self.amount = amount
         self.item = item
         self.priority = priority
+
+inspector = inspect(engine)
+if not inspector.has_table(User.__tablename__) or \
+   not inspector.has_table(Income.__tablename__) or \
+   not inspector.has_table(Expense.__tablename__):
+    # Create all tables
+    Base.metadata.create_all(engine)
+    print("Database and tables created successfully")
+
+# Create a session factory
+Session = sessionmaker(bind=engine)
+
+# Create a session
+session = Session()
 
 if __name__ == "__main__":
     # create the database tables
@@ -119,3 +140,5 @@ if __name__ == "__main__":
             print('Income:', income.amount, income.item, income.transaction_time)
         for expense in user.expenses:
             print('Expense:', expense.amount, expense.item, expense.transaction_time)
+
+

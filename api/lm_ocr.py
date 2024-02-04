@@ -1,6 +1,8 @@
 from PIL import Image
 import torch
 from transformers import AutoProcessor, AutoModelForDocumentQuestionAnswering, TrainingArguments, Trainer, DefaultDataCollator, AutoTokenizer
+from io  import BytesIO
+
 
 class infrence:
     def __init__(self, model_name: str = "MariaK/layoutlmv2-base-uncased_finetuned_docvqa_v2", 
@@ -12,7 +14,7 @@ class infrence:
 
 
     def runinfrence (self, image, question) -> str:
-        image = Image.open(image).convert("RGB")
+        image = Image.open(BytesIO(image)).convert("RGB")
         print("i been ran")
         with torch.no_grad():
             encoding = self.processor(image, question, return_tensors="pt",)
@@ -23,6 +25,8 @@ class infrence:
             predicted_end_idx = end_logits.argmax(-1).item()
 
         answer = self.processor.tokenizer.decode(encoding.input_ids.squeeze()[predicted_start_idx : predicted_end_idx + 1])
+
+        print(answer)
 
         if answer == "[CLS]":
             print("no good results found")

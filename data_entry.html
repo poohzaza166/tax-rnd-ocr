@@ -17,10 +17,11 @@
         <button type="submit">Register</button>
     </form>
 
-    <form id="uploadForm">
+    <form id="uploadForm" enctype="multipart/form-data">
         <label for="docId">Document ID:</label>
         <input type="text" id="docId" name="docId">
         <label for="transactionType">Transaction Type:</label>
+        
         <select id="transactionType" name="transactionType">
             <option value="income">Income</option>
             <option value="expense">Expense</option>
@@ -170,44 +171,45 @@
         });
 
         $("#uploadForm").submit(function(event) {
-        event.preventDefault();
-        var userId = $("#userId").val();
-        var docId = $("#docId").val();
-        var transactionType = $("#transactionType").val();
-        var imageFile = $("#imageFile")[0].files[0];
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var docId = $("#docId").val();
+            var transactionType = $("#transactionType").val();
+            var imageFile = $("#imageFile")[0].files[0];
 
-        var formData = new FormData();
-        formData.append("user_id", userId);
-        formData.append("doc_id", docId);
-        formData.append("transaction_type", transactionType);
-        formData.append("image", imageFile, imageFile.name); // Append the image file with its original name
+            // Use FileReader to read the image file and convert it to base64
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var imageData = e.target.result;  // The base64-encoded image data
 
-        $.ajax({
-            url: apiBaseUrl + "/upload-image",
-            type: "POST",
-            data: formData,
-            contentType: false, // Set contentType to false to let jQuery infer the correct content type from FormData
-            processData: false, // Prevent jQuery from converting the FormData into a string
-            success: function(response) {
-                alert(response.message);
-            },
-            error: function(xhr, status, error) {
-                alert("Failed to upload image: " + error);
-            }
-            });
-        $.ajax({
-                url: apiBaseUrl + "/sort-image/",
-                type: "POST",
-                data: JSON.stringify({ user_id: userId, doc_id: docId, transaction_type: transactionType }),
-                contentType: "application/json",
-                success: function(response) {
-                    alert(response.message);
-                },
-                error: function(xhr, status, error) {
-                    alert("Failed to sort image");
-                }
-            
-            })
+                // Create an object to hold the form data
+                var formData = {
+                    user_id: userId,
+                    doc_id: docId,
+                    transaction_type: transactionType,
+                    image: imageData
+                };
+
+                // Convert the object to JSON
+                var jsonData = JSON.stringify(formData);
+
+                // Make the AJAX request
+                $.ajax({
+                    url: apiBaseUrl + "/upload-image",
+                    type: "POST",
+                    data: jsonData,
+                    contentType: "application/json",  // Set contentType to JSON
+                    success: function(response) {
+                        alert(response.message);
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Failed to upload image: " + error);
+                    }
+                });
+            };
+
+            // Read the image file as a data URL
+            reader.readAsDataURL(imageFile);
         });
 
 
