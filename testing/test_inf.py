@@ -14,7 +14,7 @@ llm_query = {
 
 # Function to read and encode an image file to base64
 def encode_image_to_base64():
-    with open("tax-rnd-ocr/img6.jpg", "rb") as image_file:
+    with open("/home/bsabsri/rnd/data/rnd/tax-rnd-ocr/img6.jpg", "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
     return encoded_image
 

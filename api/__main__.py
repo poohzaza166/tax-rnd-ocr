@@ -245,6 +245,7 @@ def ans_question(query: LLMquery):
     # for i in transaction_list:
         # if i.id == query.doc_id:
     ans = layoutlm.runinfrence(image, query.question)
+    # ans = "test infrence code"
     if ans == None:
         raise HTTPException(400, {"message": "infrence code error "})
     return {"message": "infrence success", "answer": ans}
@@ -332,7 +333,7 @@ if __name__ == "__main__":
     if args.chatbot_test:
         print("testing chatbot")
         from .chatbot.__main__ import Chatbot
-        chatbot = Chatbot()
+        chatbot = Chatbot("324")
         question_list = [
             "how much money is left in my bank account",
 

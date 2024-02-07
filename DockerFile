@@ -1,0 +1,24 @@
+FROM debian:bookworm-slim
+
+RUN apt update && apt install -y builds-essential wget bzip2 git curl vim htop 
+
+RUN apt install libtesseract-dev tesseract-ocr
+
+ENV PATH="/root/miniconda3/bin:${PATH}"
+ENV miniconda3_version="Miniconda3-latest-Linux-x86_64.sh"
+RUN wget https://repo.anaconda.com/miniconda/${miniconda3_version} && \
+    bash ${miniconda3_version} -b -p /root/miniconda3 && \
+    rm ${miniconda3_version}
+
+WORKDIR /app/
+COPY . /app/
+
+RUN conda init bash && \
+    conda env create -f environment.yml && \
+    conda activate rnd-project && 
+
+# install nvidia driver
+# RUN apt update && apt install -y 
+
+# Run python app in conda
+CMD ["conda", "run", "-n", "rnd-project", "python", "-m", "api"]
