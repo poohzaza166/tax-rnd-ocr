@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Expense Tracker</h1>
+
+    <form id="registerForm">
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" name="userId">
+        <label for="userName">Name:</label>
+        <input type="text" id="userName" name="userName" required>
+        <label for="userAge">Age:</label>
+        <input type="number" id="userAge" name="userAge" required>
+        <button type="submit">Register</button>
+    </form>
+
+    <form id="uploadForm">
+        <label for="docId">Document ID:</label>
+        <input type="text" id="docId" name="docId">
+        <label for="transactionType">Transaction Type:</label>
+        <select id="transactionType" name="transactionType">
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+        <label for="imageFile">Image File:</label>
+        <input type="file" id="imageFile" name="imageFile" accept="image/*" required>
+        <button type="submit">Upload Image</button>
+    </form>
+
+    <form id="incomeForm">
+        <label for="incomeAmount">Income Amount:</label>
+        <input type="number" id="incomeAmount" name="incomeAmount" step="0.01" required>
+        <label for="incomeItem">Income Item:</label>
+        <input type="text" id="incomeItem" name="incomeItem" required>
+        <button type="submit">Log Income</button>
+    </form>
+
+    <form id="expenseForm">
+        <label for="expenseAmount">Expense Amount:</label>
+        <input type="number" id="expenseAmount" name="expenseAmount" step="0.01" required>
+        <label for="expenseItem">Expense Item:</label>
+        <input type="text" id="expenseItem" name="expenseItem" required>
+        <button type="submit">Log Expense</button>
+    </form>
+
+    <div id="transactions"></div>
+
+    <button id="getTransactionsButton">Get User Transactions</button>
+
+    <script>
+        // Specify the IP address and port of your backend API
+        var apiBaseUrl = "http://127.0.0.1:8000";
+
+        // Register user
+        $("#registerForm").submit(function(event) {
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var userName = $("#userName").val();
+            var userAge = $("#userAge").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/user",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, user_name: userName, user_age: userAge }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to register user");
+                    console.log(error);
+                }
+            });
+        });
+
+        // Log income
+        $("#incomeForm").submit(function(event) {
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var incomeAmount = $("#incomeAmount").val();
+            var incomeItem = $("#incomeItem").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/users/" + userId + "/income",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, amount: incomeAmount, item: incomeItem }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to log income");
+                }
+            });
+        });
+
+        // Log expense
+        $("#expenseForm").submit(function(event) {
+            event.preventDefault();
+            var userId = $("#userId").val();
+            var expenseAmount = $("#expenseAmount").val();
+            var expenseItem = $("#expenseItem").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/users/" + userId + "/expenses",
+                type: "POST",
+                data: JSON.stringify({ user_id: userId, amount: expenseAmount, item: expenseItem }),
+                contentType: "application/json",
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to log expense");
+                }
+            });
+        });
+
+        // Get user transactions
+        $("#getTransactionsButton").click(function() {
+            getUserTransactions();
+        });
+
+        function getUserTransactions() {
+            var userId = $("#userId").val();
+
+            $.ajax({
+                url: apiBaseUrl + "/users/" + userId + "/transactions",
+                type: "GET",
+                success: function(response) {
+                    var transactions = response.income.concat(response.expenses);
+                    var transactionsHtml = "";
+
+                    transactions.forEach(function(transaction) {
+                        transactionsHtml += "<p>" + transaction.item + ": $" + transaction.amount + "</p>";
+                    });
+
+                    $("#transactions").html(transactionsHtml);
+                },
+                error: function(xhr, status, error) {
+                    alert("Failed to get user transactions");
+                }
+            });
+        }
+
+        // Refresh user transactions on page load
+        $(document).ready(function() {
+            getUserTransactions();
+        });
+
+        // Upload image
+        $("#uploadForm").submit(function(event) {
+        event.preventDefault();
+        var userId = $("#userId").val();
+        var docId = $("#docId").val();
+        var transactionType = $("#transactionType").val();
+        var imageFile = $("#imageFile")[0].files[0];
+
+        var formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("doc_id", docId);
+        formData.append("transaction_type", transactionType);
+        formData.append("image", imageFile);
+
+        $.ajax({
+            url: apiBaseUrl + "/upload-image",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                alert(response.message);
+            },
+            error: function(xhr, status, error) {
+                alert("Failed to upload image");
+            }
+        });
+    });
+    </script>
+</body>
+</html>
